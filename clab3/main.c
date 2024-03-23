@@ -1,4 +1,5 @@
 // Enter your student ID and Fullname
+// 22200384 ?Üê?òÅ?õÖ
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +23,7 @@ void printChannels(struct st_channel* c[], int size);
 void pickupRandomChannels(struct st_channel* c[], int size);
 void searchChannel(struct st_channel* c[], int size);
 int addChannel(struct st_channel* c[], int size);
-void updateChannel(struct st_channel* c[], int size);
+int updateChannel(struct st_channel* c[], int size);
 int deleteChannel(struct st_channel* c[], int size);
 void makeReport(struct st_channel* c[], int size); 
 
@@ -56,7 +57,7 @@ int main(void) {
 			no = addChannel(clist, no); // Add a channel
 		}
 		else if(menu==6){
-			updateChannel(clist, no); // Modify a channel
+			no = updateChannel(clist, no); // Modify a channel
 		}
 		else if(menu==7){
 			no = deleteChannel(clist, no); // Delete a channel
@@ -91,6 +92,7 @@ int loadData(struct st_channel* c[]){
 
 int findLevel(int num){
 	int range[5]={1000,10000,100000,1000000,10000000}; // range for level
+
 	for(int j=0;j<5;j++)
 		if(num<range[j])
 			return j;
@@ -116,52 +118,209 @@ int addChannel(struct st_channel* c[], int size){
 	c[size] = temp;
 	printf("> New channel is added.\n");
 	printf("[%2d] %-20s %10d peoples [%s] \n",size+1, c[size]->name, c[size]->count,LNAME[c[size]->level]);
-	return size+1;
+	size += 1;
+	return size;
 }
 
-void printStatistics(struct st_channel* c[], int size){
-	printf("> Statistics of Channels\n");
+void printStatistics(struct st_channel *c[], int size)
+{
+    printf("> Statistics of Channels\n");
+    int count[5] = {0};        // Number of channels in each level
+    long long int total[5] = {0};  // Total number of subscribers in each level
+    char topChannel[5][100];   // Top channel in each level
+    int maxCount[5] = {0};     // Maximum subscribers in each level
 
+    for (int i = 0; i < size; i++)
+    {
+        int level = c[i]->level;
+        count[level]++;
+        total[level] += c[i]->count;
+        if (c[i]->count > maxCount[level])
+        {
+            maxCount[level] = c[i]->count;
+            strcpy(topChannel[level], c[i]->name);
+        }
+    }
 
-
-
+    for (int i = 0; i < 5; i++)
+    {
+        double average = count[i] > 0 ? (double)total[i] / count[i] : 0;
+        printf("%s : %d channels, Average %.1lf peoples, Top channel : %s (%d peoples)\n",
+               LNAME[i], count[i], average, topChannel[i], maxCount[i]);
+    }
 }
 
-void pickupRandomChannels(struct st_channel* c[], int size){
-	printf("> Pick up Channels\n");
-	printf("> How much channels you want to pick up? > ");
 
+void pickupRandomChannels(struct st_channel *c[], int size)
+{
+    printf("> Pick up Channels\n");
+    printf("> How much channels you want to pick up? > ");
+    int count;
+    scanf("%d", &count);
 
+    if (count > size)
+    {
+        printf("Error: There are only %d channels available.\n", size);
+        return;
+    }
 
-
-}
-void searchChannel(struct st_channel* c[], int size){
-	printf("> Search Channels\n");
-	printf("> Choose one (1:by peoples 2:by names) > ");
-
-
-
-
-
-}
-
-void updateChannel(struct st_channel* c[], int size){
-	printf("> Modify a new Channel\n");
-	printf("> Enter a number of channel > ");
-
-
+    printf("Random Channels\n");
+    for (int i = 0; i < count; i++)
+    {
+        int index = rand() % size;
+        printf("[%d] %s (%s level, %d peoples)\n", index + 1, c[index]->name, LNAME[c[index]->level], c[index]->count);
+    }
 }
 
-int deleteChannel(struct st_channel* c[], int size){
-	int no, yesno;
-	printf("> Delete a new Channel\n");
-	printf("> Enter a number of channel > ");
+void searchChannel(struct st_channel *c[], int size)
+{
+    printf("> Search Channels\n");
+    printf("> Choose one (1:by peoples 2:by names) > ");
+    int option;
+    scanf("%d", &option);
+
+    if (option == 1)
+    {
+        int from, to;
+        printf("> Enter the range of peoples (from ~ to) > ");
+        scanf("%d %d", &from, &to);
+
+        printf("> Result:\n");
+        int count = 0;
+        for (int i = 0; i < size; i++)
+        {
+            if (c[i]->count >= from && c[i]->count <= to)
+            {
+                printf("[%2d] %-20s %d peoples [%s]\n", i + 1, c[i]->name, c[i]->count, LNAME[c[i]->level]);
+                count++;
+            }
+        }
+        printf("> %d channels are found.\n", count);
+    }
+    else if (option == 2)
+    {
+        char searchName[100];
+        printf("> Enter a names > ");
+        scanf("%s", searchName);
+
+        printf("> Result:\n");
+        int count = 0;
+        for (int i = 0; i < size; i++)
+        {
+            if (strstr(c[i]->name, searchName) != NULL)
+            {
+                printf("[%2d] %-20s %d peoples [%s]\n", i + 1, c[i]->name, c[i]->count, LNAME[c[i]->level]);
+                count++;
+            }
+        }
+        printf("> %d channels are found.\n", count);
+    }
+}
+
+
+int updateChannel(struct st_channel *c[], int size)
+{
+    printf("> Modify a Channel\n");
+    printf("> Enter a number of channel > ");
+    int channelNumber;
+    scanf("%d", &channelNumber);
+
+    if (channelNumber != size + 1)
+    {
+        printf("> Wrong number.\n");
+        return size;
+    }
+    printf("> Enter a new name of channel > ");
+    scanf("%s", c[channelNumber - 1]->name);
+
+    printf("> Enter a new amount of peoples > ");
+    scanf("%d", &(c[channelNumber - 1]->count));
+
+    printf("> Channel info. is modified.\n");
+
+	printf("> Channel Info.\n");
+    printf("[%2d] %-20s %d peoples [%s]\n", channelNumber, c[channelNumber - 1]->name, c[channelNumber - 1]->count, LNAME[c[channelNumber - 1]->level]);
+
+	size += 1;
 
 	return size;
 }
 
 
-void makeReport(struct st_channel* c[], int size){
+int deleteChannel(struct st_channel *c[], int size)
+{
+    int channelNumber;
+    int YesorNo;
+    printf("> Delete a Channel\n");
+    printf("> Enter a number of channel > ");
+    scanf("%d", &channelNumber);
+
+    if (channelNumber > size || channelNumber <= 0)
+    {
+        printf("> Wrong number.\n");
+        return size;
+    }
+    else
+    {
+        printf("> Channel info.\n");
+        printf("[%2d] %s %20d peoples [%s]\n", channelNumber, c[channelNumber - 1]->name, c[channelNumber - 1]->count, LNAME[c[channelNumber - 1]->level]);
+        printf("Do you want to delete the channel? (1:Yes 0:No) > ");
+        scanf("%d", &YesorNo);
+        if (YesorNo == 1)
+        {
+            printf("> Channel is deleted.\n");
+            for (int i = 0; i < size - 1; i++)
+            {
+               if(channelNumber < i) c[i] = c[i + 1];
+            }
+			size -= 1;
+            return size;
+        }
+        else if (YesorNo == 0)
+        {
+            printf("> Canceled.\n");
+            return size;
+        }
+    }
+}
 
 
+
+
+void makeReport(struct st_channel *c[], int size)
+{
+    FILE *file;
+    file = fopen("channels.txt", "w");
+    printf("> All information of channels are saved into channels.txt.\n");
+    for (int i = 0; i < size; i++)
+    {
+        fprintf(file, "%s %d\n", c[i]->name, c[i]->count);
+    }
+    fclose(file);
+
+    file = fopen("report.txt", "w");
+    printf("> Channel Statistics are saved into report.txt.\n");
+    fprintf(file, "> Statistics of Channels\n");
+    for (int i = 0; i < 5; i++)
+    {
+        int totalChannels = 0;
+        int totalPeoples = 0;
+        int maxPeoples = 0;
+        char topChannel[100];
+        for (int j = 0; j < size; j++)
+        {
+            if (c[j]->level == i)
+            {
+                totalChannels++;
+                totalPeoples += c[j]->count;
+                if (c[j]->count > maxPeoples)
+                {
+                    maxPeoples = c[j]->count;
+                    strcpy(topChannel, c[j]->name);
+                }
+            }
+        }
+        fprintf(file, "%s : %d channels, Average %.1f peoples, Top channel : %s (%d peoples)\n", LNAME[i], totalChannels, (float)totalPeoples / totalChannels, topChannel, maxPeoples);
+    }
+    fclose(file);
 }
